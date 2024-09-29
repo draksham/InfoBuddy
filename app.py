@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 import time
 import google.generativeai as genai
 from PIL import Image
+from groq import Groq
 from langchain.chains import ConversationChain, LLMChain
 from langchain_core.prompts import (
     ChatPromptTemplate,
@@ -13,6 +14,7 @@ from langchain_core.prompts import (
 from langchain_core.messages import SystemMessage
 from langchain.chains.conversation.memory import ConversationBufferWindowMemory
 from langchain_groq import ChatGroq
+from langchain.prompts import PromptTemplate
 
 # Load environment variables from the .env file
 load_dotenv()
@@ -22,10 +24,8 @@ genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 model = genai.GenerativeModel("gemini-1.5-flash")
 
 def get_gemini_response(input_text, image):
-    if input_text and image:
+    if input_text:
         response = model.generate_content([input_text, image])
-    elif input_text:
-        response = model.generate_content(input_text)
     else:
         response = model.generate_content(image)
     return response.text
@@ -33,6 +33,9 @@ def get_gemini_response(input_text, image):
 def display_typing_effect(text, delay):
     """
     Display text with a typing effect in Streamlit.
+    Args:
+    - text (str): The text to display.
+    - delay (float): The delay between each letter in seconds.
     """
     placeholder = st.empty()
     typed_text = ""
@@ -43,10 +46,9 @@ def display_typing_effect(text, delay):
 
 def main():
     """
-    Main entry point of the application.
+    This function is the main entry point of the application. It sets up the Groq client, the Streamlit interface, and handles the chat interaction.
     """
     st.set_page_config(page_title='InfoBuddy with Vision', layout='wide')
-    
     # Apply custom CSS to improve text layout
     st.markdown(
         """
@@ -66,11 +68,11 @@ def main():
         st.error("GROQ_API_KEY is not set. Please ensure the .env file is correctly set up.")
         return
 
-    # Title and greeting message of the Streamlit application
+    # The title and greeting message of the Streamlit application
     st.title("InfoBuddy")
     st.write("Hi! I'm InfoBuddy, your responsive and friendly chatbot. I can help with questions, provide information, or just chat for fun. Additionally, I can analyze images as well. Let's begin!")
 
-    # Sidebar customization options
+    # Add customization options to the sidebar
     st.sidebar.title('Customization')
     system_prompt = st.sidebar.text_input("System prompt:")
     model_choice = st.sidebar.selectbox(
@@ -79,7 +81,7 @@ def main():
     )
     conversational_memory_length = st.sidebar.slider('Conversational memory length:', 1, 10, value=5)
     
-    # Slider for typing speed in milliseconds
+    # Add a slider for typing speed in milliseconds
     typing_speed = st.sidebar.slider('Typing speed (ms per letter):', 1, 10, value=5)
     typing_delay = typing_speed / 1000  # Convert milliseconds to seconds
 
@@ -139,19 +141,20 @@ def main():
         
         display_typing_effect(response, typing_delay)
 
-    # "About the Author" section
+    # Display "About the Author" section
     st.sidebar.title("About the Author")
-    st.sidebar.markdown("""
-    Hi! I'm Draksham Tharun, an AI engineer passionate about machine learning, deep learning, and innovative problem-solving. I thrive on tackling challenging projects and continuously exploring the latest technologies. Let's connect to share insights and stay in the loop with my latest ventures!
+    st.sidebar.markdown(f"""
+    Hi there! My name is Draksham Tharun, an aspiring AI engineer with a passion for machine learning, deep learning, and problem-solving. I love working on diverse projects and exploring new technologies. Connect with me to stay updated on my latest projects and endeavors!
     """)
 
     # Function to display "Connect with Me" section
     def display_connect_with_me():
-        st.sidebar.markdown("""
+        st.sidebar.markdown(f"""
             <h3 align="left">Connect with me:</h3>
             <p align="left">
-                <a href="https://www.linkedin.com/in/tharun-draksham-361285257/" target="_blank"><img align="center" src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/linked-in-alt.svg" alt="LinkedIn" height="30" width="40" /></a>
-                <a href="https://github.com/draksham" target="_blank"><img align="center" src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/github.svg" alt="Github" height="30" width="40" /></a>
+                <a href="https://www.linkedin.com/in/draksham-tharun" target="_blank"><img align="center" src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/linked-in-alt.svg" alt="LinkedIn" height="30" width="40" /></a>
+                <a href="https://www.kaggle.com/draksham" target="_blank"><img align="center" src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/kaggle.svg" alt="Kaggle" height="30" width="40" /></a>
+                <a href="https://github.com/draksham-tharun" target="_blank"><img align="center" src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/github.svg" alt="Github" height="30" width="40" /></a>
                 <a href="https://leetcode.com/u/lcs2022015/" target="_blank"><img align="center" src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/leet-code.svg" alt="LeetCode" height="30" width="40" /></a>
             </p>
         """, unsafe_allow_html=True)
