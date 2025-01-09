@@ -114,7 +114,7 @@ def main():
     if input_text:
         if image:
             response = get_gemini_response(input_text, image)
-            st.subheader("InfoBuddy Vision:")
+            st.subheader("InfoBuddy Vision:")s
         else:
             # Construct a chat prompt template using various components
             prompt = ChatPromptTemplate.from_messages(
